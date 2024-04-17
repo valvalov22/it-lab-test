@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { ref } from "vue";
+    import { computed, ref } from "vue";
     import { useClientStore } from "../store/index.ts";
     import ClientForm from "./ClientForm.vue";
 
@@ -11,9 +11,6 @@
     const updateSearchQuery = () => {
         clientStore.setSearchQuery(searchQuery.value);
     };
-
-    const totalVisitors = ref(280);
-    const remainingVisitors = ref(35);
 
     const showAddClientPopup = () => {
         showAddClient.value = true;
@@ -27,6 +24,15 @@
         searchQuery.value = "";
         updateSearchQuery();
     };
+
+    const totalVisitors = computed(() => {
+        return clientStore.clients.filter((client) => client.isPresence).length;
+    });
+
+    const remainingVisitors = computed(() => {
+        return clientStore.clients.filter((client) => !client.isPresence)
+            .length;
+    });
 </script>
 
 <template>

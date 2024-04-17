@@ -1,9 +1,10 @@
 import { defineStore } from "pinia";
 import { Client, ClientFilterType } from "../components/types";
+import { ref } from "vue";
 
 const CLIENTS_LOCAL_STORAGE_KEY = "clients";
 
-const saveClientsToLocalStorage = (clients: any) => {
+const saveClientsToLocalStorage = (clients: Client[]) => {
     localStorage.setItem(CLIENTS_LOCAL_STORAGE_KEY, JSON.stringify(clients));
 };
 
@@ -29,38 +30,49 @@ const loadClientsFromLocalStorage = (): Client[] => {
           ];
 };
 
-export const useClientStore = defineStore("client", {
-    state: () => ({
-        clients: loadClientsFromLocalStorage(),
-        filterType: "all" as ClientFilterType,
-        searchQuery: "" as string,
-    }),
-    actions: {
-        setSearchQuery(query: string) {
-            this.searchQuery = query;
-        },
-        setFilterType(type: "all" | "present" | "absent") {
-            this.filterType = type;
-        },
-        addClient(client: Client) {
-            this.clients.push(client);
-            saveClientsToLocalStorage(this.clients);
-        },
-        loadClientsFromLocalStorage() {
-            this.clients = loadClientsFromLocalStorage();
-        },
-        removeClient(id: number) {
-            this.clients = this.clients.filter((client) => client.id !== id);
-            this.clients.forEach((client, index) => {
+export const useClientStore = defineStore("client", () => {
+    const clients = ref<Client[]>(loadClientsFromLocalStorage());
+    const filterType = ref<ClientFilterType>("all");
+    const searchQuery = ref<string>("");
+
+    const setSearchQuery = (query: string) => {
+        searchQuery.value = query;
+    };
+
+    const setFilterType = (type: "all" | "present" | "absent") => {
+        filterType.value = type;
+    };
+
+    const addClient = (client: Client) => {
+        clients.value.push(client);
+        saveClientsToLocalStorage(clients.value);
+    };
+
+    const removeClient = (id: number) => {
+        clients.value = clients.value
+            .filter((client) => client.id !== id)
+            .map((client, index) => {
                 client.id = index + 1;
+                return client;
             });
-            saveClientsToLocalStorage(this.clients);
-        },
-        updateClient(client: Client) {
-            this.clients = this.clients.map((item) =>
-                item.id === client.id ? client : item
-            );
-            saveClientsToLocalStorage(this.clients);
-        },
-    },
+        saveClientsToLocalStorage(clients.value);
+    };
+
+    const updateClient = (client: Client) => {
+        clients.value = clients.value.map((item) =>
+            item.id === client.id ? client : item
+        );
+        saveClientsToLocalStorage(clients.value);
+    };
+
+    return {
+        clients,
+        filterType,
+        searchQuery,
+        setSearchQuery,
+        setFilterType,
+        addClient,
+        removeClient,
+        updateClient,
+    };
 });
